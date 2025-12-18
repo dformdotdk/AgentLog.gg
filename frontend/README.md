@@ -18,6 +18,7 @@ http://localhost:3000/start?series=agent-academy&book=mission-math&season=1&toke
 - API base URL comes from `NUXT_PUBLIC_API_BASE_URL` (see `.env.example`).
 - The PWA is configured with @vite-pwa/nuxt and a dark sci-fi theme using TailwindCSS.
 - Pinia stores persist the session token + agent pairing in `localStorage`.
+- Developer tools on `/start` are hidden by default; set `NUXT_PUBLIC_SHOW_DEV_TOOLS=true` locally to reveal them. They should remain off in production unless explicitly enabled.
 
 ## Start server
 - Gem en start-kommando i repo-roden (så du altid kan starte begge):
