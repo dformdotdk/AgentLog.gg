@@ -34,12 +34,12 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $videoIntro = Video::create([
-            'title' => 'Welcome to the Academy',
+        $videoBriefing = Video::create([
+            'title' => 'Mission Briefing',
             'provider' => 'youtube',
-            'provider_id' => 'intro123',
-            'duration_seconds' => 120,
-            'subtitles' => ['en' => 'https://cdn.agentlog.gg/subs/intro-en.vtt'],
+            'provider_id' => 'gJLAWcuvzJk',
+            'duration_seconds' => 180,
+            'subtitles' => ['en' => 'https://cdn.agentlog.gg/subs/mission01-brief-en.vtt'],
         ]);
 
         $videoLesson = Video::create([
@@ -83,7 +83,7 @@ class DatabaseSeeder extends Seeder
                 ],
                 'validation' => ['type' => 'string_set', 'correct' => ['one half', '1/2']],
                 'videos' => [
-                    ['video' => $videoIntro, 'type' => 'intro', 'sort' => 1],
+                    ['video' => $videoBriefing, 'type' => 'intro', 'sort' => 1],
                     ['video' => $videoLesson, 'type' => 'lesson', 'sort' => 2],
                 ],
             ],
