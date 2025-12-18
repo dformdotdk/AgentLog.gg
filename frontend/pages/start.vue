@@ -10,6 +10,7 @@ const api = useAgentlogApi();
 const session = useSessionStore();
 const content = useContentStore();
 const progress = useProgressStore();
+const runtimeConfig = useRuntimeConfig();
 
 session.hydrate();
 
@@ -17,6 +18,7 @@ const series = ref<string>((route.query.series as string) || session.seriesSlug 
 const book = ref<string>((route.query.book as string) || session.bookSlug || 'mission-math');
 const season = ref<number>(Number(route.query.season) || session.seasonNo || 1);
 const token = ref<string>((route.query.token as string) || 'BOOK-TOKEN-1');
+const showDevTools = runtimeConfig.public.showDevTools;
 
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
@@ -97,7 +99,7 @@ const startPairing = async () => {
       </div>
     </section>
 
-    <section class="glow-card p-6 space-y-4">
+    <section v-if="showDevTools" class="glow-card p-6 space-y-4">
       <details
         class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200"
         :open="showDevOptions"
