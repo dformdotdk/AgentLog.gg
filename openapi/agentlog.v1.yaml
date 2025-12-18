@@ -1,0 +1,314 @@
+openapi: 3.0.3
+info:
+  title: AgentLog API
+  version: "1.0"
+servers:
+  - url: https://agentlog.gg
+paths:
+  /api/v1/content/{series}/{book}/s/{seasonNo}:
+    get:
+      summary: Get season content manifest
+      parameters:
+        - in: path
+          name: series
+          required: true
+          schema: { type: string }
+        - in: path
+          name: book
+          required: true
+          schema: { type: string }
+        - in: path
+          name: seasonNo
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Content manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentManifest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "410":
+          description: Season inactive
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/pair:
+    post:
+      summary: Pair device/book to create agent session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PairRequest"
+      responses:
+        "200":
+          description: Paired session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PairResponse"
+        "400":
+          description: Invalid input/token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Content not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/agent/status:
+    get:
+      summary: Get agent status for a season
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: season_id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Agent status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentStatus"
+        "401":
+          description: Invalid session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/missions/{missionId}/attempt:
+    post:
+      summary: Submit a mission attempt (validate answer)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: missionId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MissionAttemptRequest" }
+      responses:
+        "200":
+          description: Attempt result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MissionAttemptResponse" }
+        "401":
+          description: Invalid session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Locked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Mission not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Rate limit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/parent/pin/set:
+    post:
+      summary: Set parent PIN (first time)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PinRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /api/v1/parent/pin/verify:
+    post:
+      summary: Verify parent PIN
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PinRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+        "403":
+          description: Invalid PIN
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code: { type: string }
+        message: { type: string }
+        retry_after_seconds: { type: integer, nullable: true }
+
+    OkResponse:
+      type: object
+      properties:
+        ok: { type: boolean, example: true }
+        session_token: { type: string, nullable: true }
+
+    PairRequest:
+      type: object
+      required: [series_slug, book_slug, season_no]
+      properties:
+        series_slug: { type: string }
+        book_slug: { type: string }
+        season_no: { type: integer }
+        book_token: { type: string, nullable: true }
+        device_agent_id: { type: string, nullable: true }
+
+    PairResponse:
+      type: object
+      required: [session_token, agent_key, agent_state]
+      properties:
+        session_token: { type: string }
+        agent_key: { type: string }
+        agent_state:
+          type: object
+          properties:
+            xp_total: { type: integer }
+            level: { type: integer }
+            next_mission_no: { type: integer }
+
+    ContentManifest:
+      type: object
+      properties:
+        series:
+          type: object
+          properties:
+            slug: { type: string }
+            name: { type: string }
+            theme_config: { type: object }
+        book:
+          type: object
+          properties:
+            slug: { type: string }
+            name: { type: string }
+            subject: { type: string }
+            grade_band: { type: string }
+            language: { type: string }
+        season:
+          type: object
+          properties:
+            season_no: { type: integer }
+            version: { type: string }
+            rules: { type: object }
+        missions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              mission_no: { type: integer }
+              slug: { type: string }
+              xp_reward: { type: integer }
+              is_boss: { type: boolean }
+              topic_tags:
+                type: array
+                items: { type: string }
+              assets: { type: object }
+              videos:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type: { type: string }
+                    title: { type: string }
+                    provider: { type: string }
+                    provider_id: { type: string }
+                    duration_seconds: { type: integer }
+                    parent_only: { type: boolean }
+                    teacher_only: { type: boolean }
+
+    AgentStatus:
+      type: object
+      properties:
+        xp_total: { type: integer }
+        level: { type: integer }
+        next_mission_id: { type: integer, nullable: true }
+        milestones_unlocked:
+          type: array
+          items: { type: integer }
+        missions:
+          type: array
+          items:
+            type: object
+            properties:
+              mission_id: { type: integer }
+              status: { type: string }
+
+    MissionAttemptRequest:
+      type: object
+      required: [answer]
+      properties:
+        answer: { type: string }
+
+    MissionAttemptResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
+        error_code: { type: string, nullable: true }
+        hint_available: { type: boolean, nullable: true }
+        xp_gained: { type: integer, nullable: true }
+        new_xp: { type: integer, nullable: true }
+        reward_available: { type: boolean, nullable: true }
+        next_mission_id: { type: integer, nullable: true }
+        unlocks:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              id: { type: string, nullable: true }
+              xp: { type: integer, nullable: true }
+
+    PinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin: { type: string }
