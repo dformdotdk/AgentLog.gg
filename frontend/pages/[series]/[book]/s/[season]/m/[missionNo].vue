@@ -20,6 +20,7 @@ const missionNoParam = computed(() => Number(route.params.missionNo));
 
 const answer = ref('');
 const feedback = ref<string | null>(null);
+const feedbackType = ref<'success' | 'error' | null>(null);
 const error = ref<string | null>(null);
 const submitting = ref(false);
 const locked = ref(false);
@@ -36,6 +37,7 @@ const rewardButtonRef = ref<HTMLButtonElement | null>(null);
 
 const mission = computed(() => content.missionByNo(missionNoParam.value));
 const totalMissions = computed(() => content.manifest?.missions.length || 0);
+const missionVideos = computed(() => mission.value?.videos?.filter((v) => !v.parent_only) || []);
 const missionStatus = computed(() => {
   if (!mission.value) return 'locked';
   return progress.missionsStatus[mission.value.id] || 'locked';
@@ -108,12 +110,14 @@ const submitAnswer = async () => {
   if (!mission.value) return;
   submitting.value = true;
   feedback.value = null;
+  feedbackType.value = null;
   error.value = null;
   locked.value = false;
   try {
     const res = await api.attemptMission(mission.value.id, answer.value);
     if (!res.success) {
       if (res.error_code === 'LOCKED') locked.value = true;
+      feedbackType.value = 'error';
       feedback.value = res.error_code === 'WRONG_ANSWER' ? 'Wrong answer. Try again!' : res.error_code;
       return;
     }
@@ -134,6 +138,8 @@ const submitAnswer = async () => {
     rewardDetails.unlocks = res.unlocks || [];
     rewardDetails.successCopy = mission.value?.content?.success_copy || 'Mission complete!';
     rewardDetails.nextMissionNo = computeNextMissionNo();
+    feedbackType.value = 'success';
+    feedback.value = rewardDetails.successCopy;
     showRewardOverlay.value = true;
     await nextTick();
     rewardButtonRef.value?.focus();
@@ -243,7 +249,16 @@ const continueToNextMission = () => {
               Mission locked. Complete previous mission first.
             </p>
             <p v-if="showHint" class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50">{{ hintText }}</p>
-            <p v-if="feedback" class="rounded-lg border border-green-500/50 bg-green-900/30 px-3 py-2 text-sm text-green-100">{{ feedback }}</p>
+            <p
+              v-if="feedback"
+              class="rounded-lg px-3 py-2 text-sm"
+              :class="{
+                'border border-green-500/50 bg-green-900/30 text-green-100': feedbackType === 'success',
+                'border border-red-500/60 bg-red-900/40 text-red-100': feedbackType === 'error',
+              }"
+            >
+              {{ feedback }}
+            </p>
             <p v-if="error" class="rounded-lg border border-red-500/60 bg-red-900/40 px-3 py-2 text-sm text-red-100">{{ error }}</p>
           </div>
 
@@ -251,14 +266,28 @@ const continueToNextMission = () => {
             <summary class="cursor-pointer text-cyan-200">Watch briefing</summary>
             <div class="mt-3 grid gap-3 md:grid-cols-2">
               <div
-                v-for="video in mission.videos.filter((v) => !v.parent_only)"
+                v-for="video in missionVideos"
                 :key="video.provider_id"
-                class="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-200"
+                class="space-y-2 rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-200"
               >
                 <p class="font-semibold text-cyan-200">{{ video.title }}</p>
                 <p class="text-xs text-slate-400">Provider: {{ video.provider }} · {{ video.duration_seconds }}s</p>
+                <div
+                  v-if="video.provider === 'youtube'"
+                  class="aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"
+                >
+                  <iframe
+                    class="h-full w-full"
+                    :src="`https://www.youtube-nocookie.com/embed/${video.provider_id}?rel=0&modestbranding=1`"
+                    :title="video.title"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  />
+                </div>
+                <p v-else class="text-xs text-slate-400">Video provider not supported yet.</p>
               </div>
-              <p v-if="!mission.videos.length" class="text-slate-500 text-sm">No videos for this mission.</p>
+              <p v-if="!missionVideos.length" class="text-slate-500 text-sm">No videos for this mission.</p>
             </div>
           </details>
         </div>
