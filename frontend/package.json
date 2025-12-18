@@ -1,0 +1,19 @@
+{
+  "name": "agentlog-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --port 3000",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.0",
+    "@pinia/nuxt": "^0.4.11",
+    "@vite-pwa/nuxt": "^0.10.6",
+    "nuxt": "^3.11.2",
+    "pinia": "^2.1.7",
+    "zod": "^3.23.8"
+  }
+}

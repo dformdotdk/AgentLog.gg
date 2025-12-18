@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>AgentLog</title>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1220" />
+      <stop offset="100%" stop-color="#1c2d4f" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#bg)" />
+  <path fill="none" stroke="#6ee7ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M30 86c14-10 24-28 34-28s14 18 34 18" />
+  <path fill="none" stroke="#a855f7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M32 44c8 8 15 12 22 12s14-4 22-12" />
+  <circle cx="44" cy="48" r="6" fill="#6ee7ff" />
+  <circle cx="84" cy="44" r="6" fill="#a855f7" />
+  <circle cx="64" cy="82" r="8" fill="#f59e0b" />
+</svg>
