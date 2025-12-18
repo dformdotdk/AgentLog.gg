@@ -66,6 +66,21 @@ class DatabaseSeeder extends Seeder
                 'is_boss' => false,
                 'topic_tags' => ['fractions'],
                 'assets' => ['base_asset_id' => 'asset_fractions_base'],
+                'content' => [
+                    'title' => 'Fractions Basics',
+                    'briefing' => [
+                        'Welcome, Agent. Your first drill begins now.',
+                        'The Academy gates open only to correct intel.',
+                        'Show that you can translate a fraction into code.',
+                    ],
+                    'objective' => 'Enter the correct fraction code to unlock Base Module 01.',
+                    'task' => [
+                        'prompt' => "Write 'one half' as a fraction.",
+                        'answer_format' => 'text',
+                    ],
+                    'hint' => 'A fraction looks like numerator/denominator. Half means 1 out of 2.',
+                    'success_copy' => 'Module unlocked. Base systems online.',
+                ],
                 'validation' => ['type' => 'string_set', 'correct' => ['one half', '1/2']],
                 'videos' => [
                     ['video' => $videoIntro, 'type' => 'intro', 'sort' => 1],
@@ -79,6 +94,21 @@ class DatabaseSeeder extends Seeder
                 'is_boss' => false,
                 'topic_tags' => ['fractions', 'comparison'],
                 'assets' => ['lore_id' => 'lore_fraction_compare'],
+                'content' => [
+                    'title' => 'Signal Check: Fractions',
+                    'briefing' => [
+                        'Base sensors are picking up two incoming signals.',
+                        'We need the stronger one to align our shields.',
+                        'Convert the fraction to a code the system understands.',
+                    ],
+                    'objective' => 'Send the correct decimal reading to stabilize Base Module 02.',
+                    'task' => [
+                        'prompt' => 'Type the decimal value of three-quarters (3/4).',
+                        'answer_format' => 'text',
+                    ],
+                    'hint' => 'Divide the top number by the bottom: 3 ÷ 4.',
+                    'success_copy' => 'Signal locked. Shields calibrated.',
+                ],
                 'validation' => ['type' => 'numeric', 'correct' => [0.75], 'tolerance' => 0.05],
                 'videos' => [
                     ['video' => $videoLesson, 'type' => 'lesson', 'sort' => 1],
@@ -91,6 +121,21 @@ class DatabaseSeeder extends Seeder
                 'is_boss' => true,
                 'topic_tags' => ['fractions', 'boss'],
                 'assets' => ['base_asset_id' => 'asset_boss_base'],
+                'content' => [
+                    'title' => 'Boss Test: Reactor Balance',
+                    'briefing' => [
+                        'The core reactor is wobbling between two energy cells.',
+                        'Stabilizers will only engage if the inputs are perfectly balanced.',
+                        'Solve the final check to keep the station online.',
+                    ],
+                    'objective' => 'Calibrate the reactor by sending the exact balance code.',
+                    'task' => [
+                        'prompt' => 'Enter the balance code where x equals 2 and the halves match.',
+                        'answer_format' => 'text',
+                    ],
+                    'hint' => 'Balance means both sides stay equal when x is set.',
+                    'success_copy' => 'Reactor steady. Command signs off with honors.',
+                ],
                 'validation' => [
                     'type' => 'multi',
                     'parts' => [

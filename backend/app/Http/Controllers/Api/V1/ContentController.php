@@ -44,6 +44,7 @@ class ContentController extends Controller
                 'is_boss' => (bool)$m->is_boss,
                 'topic_tags' => $m->topic_tags,
                 'assets' => $m->assets,
+                'content' => $m->content,
                 'videos' => $videos,
             ];
         });

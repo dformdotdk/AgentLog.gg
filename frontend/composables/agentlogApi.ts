@@ -11,6 +11,20 @@ type MissionVideo = {
   subtitles: Record<string, string> | null;
 };
 
+type MissionTask = {
+  prompt: string;
+  answer_format: string;
+};
+
+type MissionContent = {
+  title: string;
+  briefing: string[];
+  objective: string;
+  task: MissionTask;
+  hint: string;
+  success_copy: string;
+};
+
 type Mission = {
   id: number;
   mission_no: number;
@@ -19,6 +33,7 @@ type Mission = {
   is_boss: boolean;
   topic_tags: string[];
   assets: Record<string, unknown> | null;
+  content: MissionContent | null;
   videos: MissionVideo[];
 };
 
@@ -87,4 +102,4 @@ export const useAgentlogApi = () => {
   return { getContent, pair, getStatus, attemptMission };
 };
 
-export type { Mission, ContentResponse, PairResponse, StatusResponse, AttemptResponse };
+export type { Mission, MissionContent, ContentResponse, PairResponse, StatusResponse, AttemptResponse };
