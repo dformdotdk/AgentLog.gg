@@ -19,12 +19,14 @@ class Mission extends Model
         'is_boss',
         'topic_tags',
         'assets',
+        'content',
         'validation',
     ];
 
     protected $casts = [
         'topic_tags' => 'array',
         'assets' => 'array',
+        'content' => 'array',
         'validation' => 'array',
         'is_boss' => 'boolean',
     ];
