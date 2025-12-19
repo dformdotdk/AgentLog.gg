@@ -50,6 +50,12 @@ const missionTitle = computed(
 const missionNumberLabel = computed(
   () => mission.value?.mission_no?.toString().padStart(2, '0') || missionNoParam.value.toString().padStart(2, '0'),
 );
+const missionMetaLabel = computed(() => {
+  const slug = mission.value?.slug || 'intel-loading';
+  const missionNo = mission.value?.mission_no || missionNoParam.value;
+  const total = totalMissions.value || '—';
+  return `${slug} · ${missionNo}/${total}`;
+});
 const briefingLines = computed(() => mission.value?.content?.briefing || []);
 const objectiveLine = computed(() => mission.value?.content?.objective || '');
 const taskPrompt = computed(() => mission.value?.content?.task?.prompt || '');
