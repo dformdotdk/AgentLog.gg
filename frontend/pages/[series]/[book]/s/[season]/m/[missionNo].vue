@@ -62,7 +62,6 @@ const taskPrompt = computed(() => mission.value?.content?.task?.prompt || '');
 const hintText = computed(() => mission.value?.content?.hint || '');
 const hasBriefingContent = computed(() => briefingLines.value.length || objectiveLine.value);
 const hasTaskContent = computed(() => taskPrompt.value);
-const missionVideos = computed(() => mission.value?.videos?.filter((v) => !v.parent_only) || []);
 const briefingVideo = computed(() => {
   const introVideo = missionVideos.value.find((v) => v.type === 'intro' && v.provider === 'youtube');
   if (introVideo) return introVideo;
@@ -312,14 +311,14 @@ const continueToNextMission = () => {
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
-                  />
+                  ></iframe>
                 </div>
                 <p v-else class="text-xs text-slate-400">Video provider not supported yet.</p>
               </div>
               <p v-if="!missionVideos.length" class="text-slate-500 text-sm">No videos for this mission.</p>
             </div>
             <p v-if="error" class="rounded-lg border border-red-500/60 bg-red-900/40 px-3 py-2 text-sm text-red-100">{{ error }}</p>
-          </div>
+          </details>
         </div>
         <div v-else class="glow-card p-4 text-sm text-slate-300">Intel not loaded yet.</div>
       </section>
@@ -395,7 +394,7 @@ const continueToNextMission = () => {
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
-          />
+          ></iframe>
         </div>
       </div>
     </div>
