@@ -38,6 +38,7 @@ const rewardButtonRef = ref<HTMLButtonElement | null>(null);
 
 const mission = computed(() => content.missionByNo(missionNoParam.value));
 const totalMissions = computed(() => content.manifest?.missions.length || 0);
+const missionVideos = computed(() => mission.value?.videos?.filter((v) => !v.parent_only) || []);
 const missionStatus = computed(() => {
   if (!mission.value) return 'locked';
   return progress.missionsStatus[mission.value.id] || 'locked';
@@ -267,26 +268,46 @@ const continueToNextMission = () => {
             >
               Mission locked. Complete previous mission first.
             </p>
-            <p v-if="showHint && hintText" class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50">{{ hintText }}</p>
-            <p v-if="showHint && !hintText" class="text-sm text-slate-400">Hint intel not loaded.</p>
-
-            <div
+            <p v-if="showHint" class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50">{{ hintText }}</p>
+            <p
               v-if="feedback"
-              class="space-y-2 rounded-lg px-3 py-2 text-sm"
+              class="rounded-lg px-3 py-2 text-sm"
               :class="{
                 'border border-green-500/50 bg-green-900/30 text-green-100': feedbackType === 'success',
                 'border border-red-500/60 bg-red-900/40 text-red-100': feedbackType === 'error',
               }"
             >
-              <p>{{ feedback }}</p>
-              <div v-if="feedbackType === 'success'" class="space-y-1 text-xs">
-                <p class="text-emerald-100">Unlocks:</p>
-                <ul v-if="rewardDetails.unlocks?.length" class="list-disc space-y-1 pl-4">
-                  <li v-for="(unlock, idx) in rewardDetails.unlocks" :key="idx">{{ unlock.title || JSON.stringify(unlock) }}</li>
-                </ul>
-                <p v-else class="text-emerald-50/80">No new unlocks this time.</p>
-                <button class="btn-primary mt-2 w-full justify-center" type="button" @click="continueToNextMission">Continue</button>
+              {{ feedback }}
+            </p>
+            <p v-if="error" class="rounded-lg border border-red-500/60 bg-red-900/40 px-3 py-2 text-sm text-red-100">{{ error }}</p>
+          </div>
+
+          <details class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
+            <summary class="cursor-pointer text-cyan-200">Watch briefing</summary>
+            <div class="mt-3 grid gap-3 md:grid-cols-2">
+              <div
+                v-for="video in missionVideos"
+                :key="video.provider_id"
+                class="space-y-2 rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-200"
+              >
+                <p class="font-semibold text-cyan-200">{{ video.title }}</p>
+                <p class="text-xs text-slate-400">Provider: {{ video.provider }} · {{ video.duration_seconds }}s</p>
+                <div
+                  v-if="video.provider === 'youtube'"
+                  class="aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"
+                >
+                  <iframe
+                    class="h-full w-full"
+                    :src="`https://www.youtube-nocookie.com/embed/${video.provider_id}?rel=0&modestbranding=1`"
+                    :title="video.title"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  />
+                </div>
+                <p v-else class="text-xs text-slate-400">Video provider not supported yet.</p>
               </div>
+              <p v-if="!missionVideos.length" class="text-slate-500 text-sm">No videos for this mission.</p>
             </div>
             <p v-if="error" class="rounded-lg border border-red-500/60 bg-red-900/40 px-3 py-2 text-sm text-red-100">{{ error }}</p>
           </div>
