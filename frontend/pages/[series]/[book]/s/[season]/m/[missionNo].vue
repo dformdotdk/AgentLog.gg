@@ -20,11 +20,13 @@ const missionNoParam = computed(() => Number(route.params.missionNo));
 
 const answer = ref('');
 const feedback = ref<string | null>(null);
+const feedbackType = ref<'success' | 'error' | null>(null);
 const error = ref<string | null>(null);
 const submitting = ref(false);
 const locked = ref(false);
 const loading = ref(true);
 const showHint = ref(false);
+const showVideoModal = ref(false);
 const showRewardOverlay = ref(false);
 const rewardDetails = reactive({
   xpGained: 0,
@@ -44,10 +46,21 @@ const missionStatus = computed(() => {
 const missionTitle = computed(
   () => mission.value?.content?.title || mission.value?.slug.replace('-', ' ') || 'Mission',
 );
+const missionNumberLabel = computed(
+  () => mission.value?.mission_no?.toString().padStart(2, '0') || missionNoParam.value.toString().padStart(2, '0'),
+);
 const briefingLines = computed(() => mission.value?.content?.briefing || []);
-const objectiveLine = computed(() => mission.value?.content?.objective || 'Complete the mission objective.');
-const taskPrompt = computed(() => mission.value?.content?.task?.prompt || 'Enter your answer');
-const hintText = computed(() => mission.value?.content?.hint || 'Think back to the last training clip.');
+const objectiveLine = computed(() => mission.value?.content?.objective || '');
+const taskPrompt = computed(() => mission.value?.content?.task?.prompt || '');
+const hintText = computed(() => mission.value?.content?.hint || '');
+const hasBriefingContent = computed(() => briefingLines.value.length || objectiveLine.value);
+const hasTaskContent = computed(() => taskPrompt.value);
+const missionVideos = computed(() => mission.value?.videos?.filter((v) => !v.parent_only) || []);
+const briefingVideo = computed(() => {
+  const introVideo = missionVideos.value.find((v) => v.type === 'intro' && v.provider === 'youtube');
+  if (introVideo) return introVideo;
+  return missionVideos.value.find((v) => v.provider === 'youtube') || null;
+});
 
 const ensureSession = async () => {
   if (!session.token) {
@@ -108,12 +121,18 @@ const submitAnswer = async () => {
   if (!mission.value) return;
   submitting.value = true;
   feedback.value = null;
+  feedbackType.value = null;
   error.value = null;
   locked.value = false;
+  rewardDetails.xpGained = 0;
+  rewardDetails.unlocks = [];
+  rewardDetails.successCopy = '';
+  rewardDetails.nextMissionNo = null;
   try {
     const res = await api.attemptMission(mission.value.id, answer.value);
     if (!res.success) {
       if (res.error_code === 'LOCKED') locked.value = true;
+      feedbackType.value = 'error';
       feedback.value = res.error_code === 'WRONG_ANSWER' ? 'Wrong answer. Try again!' : res.error_code;
       return;
     }
@@ -134,6 +153,8 @@ const submitAnswer = async () => {
     rewardDetails.unlocks = res.unlocks || [];
     rewardDetails.successCopy = mission.value?.content?.success_copy || 'Mission complete!';
     rewardDetails.nextMissionNo = computeNextMissionNo();
+    feedbackType.value = 'success';
+    feedback.value = rewardDetails.successCopy;
     showRewardOverlay.value = true;
     await nextTick();
     rewardButtonRef.value?.focus();
@@ -164,15 +185,26 @@ const continueToNextMission = () => {
 
 <template>
   <div class="space-y-4">
-    <div class="glow-card p-4 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">XP: {{ progress.xp_total }} · Level {{ progress.level }}</p>
-        <h1 class="font-display text-2xl">Mission {{ mission?.mission_no?.toString().padStart(2, '0') || '--' }}</h1>
-        <p class="text-sm text-slate-400">Mission {{ mission?.mission_no || missionNoParam }}/{{ totalMissions || '—' }} · {{ mission?.slug }}</p>
-      </div>
-      <div class="text-right text-sm text-slate-300">
-        <p class="rounded-lg border border-cyan-400/50 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">+{{ mission?.xp_reward || 0 }} XP reward</p>
-        <p class="text-xs text-slate-400">Status: {{ missionStatus }}</p>
+    <div class="glow-card p-5">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Mission {{ missionNumberLabel }}</p>
+          <h1 class="font-display text-2xl text-cyan-50">{{ missionTitle }}</h1>
+          <p class="text-xs text-slate-500">{{ mission?.slug || 'intel-loading' }} · {{ mission?.mission_no || missionNoParam }}/{{ totalMissions || '—' }}</p>
+        </div>
+        <div class="flex flex-col items-end gap-2 text-sm">
+          <span class="rounded-lg border border-cyan-400/50 bg-cyan-400/10 px-3 py-1 text-cyan-100">+{{ mission?.xp_reward || 0 }} XP</span>
+          <span
+            class="rounded-full px-3 py-1 text-xs"
+            :class="{
+              'border border-emerald-400/60 bg-emerald-500/10 text-emerald-100': missionStatus === 'completed',
+              'border border-cyan-400/60 bg-cyan-500/10 text-cyan-100': missionStatus === 'active',
+              'border border-slate-700 bg-slate-800 text-slate-200': missionStatus === 'locked',
+            }"
+          >
+            {{ missionStatus === 'locked' ? 'Locked' : missionStatus === 'completed' ? 'Completed' : 'Active' }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -180,47 +212,40 @@ const continueToNextMission = () => {
     <div v-else-if="!mission" class="glow-card p-6 text-center text-red-200">Mission not found.</div>
     <div v-else class="grid gap-4 lg:grid-cols-[1.5fr,0.9fr]">
       <section class="space-y-4">
-        <div class="glow-card p-6 space-y-4">
+        <div v-if="hasBriefingContent" class="glow-card p-6 space-y-4">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Mission #{{ mission.mission_no }}</p>
-              <h2 class="font-display text-2xl text-cyan-50">{{ missionTitle }}</h2>
-              <p class="text-sm text-slate-400">{{ mission.slug }}</p>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Briefing</p>
+              <h2 class="font-display text-xl text-cyan-50">{{ missionTitle }}</h2>
             </div>
-            <div class="flex flex-col items-end gap-2">
-              <div class="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">+{{ mission.xp_reward }} XP</div>
-              <span
-                class="rounded-full px-3 py-1 text-xs"
-                :class="{
-                  'border border-emerald-400/60 bg-emerald-500/10 text-emerald-100': missionStatus === 'completed',
-                  'border border-cyan-400/60 bg-cyan-500/10 text-cyan-100': missionStatus === 'active',
-                  'border border-slate-700 bg-slate-800 text-slate-200': missionStatus === 'locked',
-                }"
-              >
-                {{ missionStatus === 'locked' ? 'Locked' : missionStatus === 'completed' ? 'Completed' : 'Active' }}
-              </span>
-            </div>
+            <button
+              v-if="briefingVideo"
+              class="btn-primary"
+              type="button"
+              @click="showVideoModal = true"
+            >
+              Play briefing
+            </button>
           </div>
 
           <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <p class="text-xs uppercase tracking-[0.15em] text-slate-400">Briefing</p>
-            <ul class="mt-2 list-disc space-y-1 pl-4 text-slate-200">
+            <ul class="list-disc space-y-2 pl-5 text-slate-200">
               <li v-for="line in briefingLines" :key="line">{{ line }}</li>
             </ul>
           </div>
 
-          <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-4 text-slate-100">
+          <div v-if="objectiveLine" class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-4 text-slate-100">
             <p class="text-xs uppercase tracking-[0.2em] text-cyan-200">Objective</p>
             <p class="mt-2 text-base leading-relaxed">{{ objectiveLine }}</p>
           </div>
         </div>
+        <div v-else class="glow-card p-4 text-sm text-slate-300">Intel not loaded yet.</div>
 
-        <div class="glow-card p-6 space-y-4">
+        <div v-if="hasTaskContent" class="glow-card p-6 space-y-4">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div class="space-y-1">
               <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Task</p>
-              <h3 class="font-display text-xl leading-snug">{{ taskPrompt }}</h3>
-              <p class="text-xs text-slate-500">Answer format: {{ mission.content?.task?.answer_format || 'text' }}</p>
+              <h3 class="font-display text-2xl leading-snug text-cyan-50">{{ taskPrompt }}</h3>
             </div>
             <div class="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">+{{ mission.xp_reward }} XP</div>
           </div>
@@ -242,32 +267,37 @@ const continueToNextMission = () => {
             >
               Mission locked. Complete previous mission first.
             </p>
-            <p v-if="showHint" class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50">{{ hintText }}</p>
-            <p v-if="feedback" class="rounded-lg border border-green-500/50 bg-green-900/30 px-3 py-2 text-sm text-green-100">{{ feedback }}</p>
+            <p v-if="showHint && hintText" class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50">{{ hintText }}</p>
+            <p v-if="showHint && !hintText" class="text-sm text-slate-400">Hint intel not loaded.</p>
+
+            <div
+              v-if="feedback"
+              class="space-y-2 rounded-lg px-3 py-2 text-sm"
+              :class="{
+                'border border-green-500/50 bg-green-900/30 text-green-100': feedbackType === 'success',
+                'border border-red-500/60 bg-red-900/40 text-red-100': feedbackType === 'error',
+              }"
+            >
+              <p>{{ feedback }}</p>
+              <div v-if="feedbackType === 'success'" class="space-y-1 text-xs">
+                <p class="text-emerald-100">Unlocks:</p>
+                <ul v-if="rewardDetails.unlocks?.length" class="list-disc space-y-1 pl-4">
+                  <li v-for="(unlock, idx) in rewardDetails.unlocks" :key="idx">{{ unlock.title || JSON.stringify(unlock) }}</li>
+                </ul>
+                <p v-else class="text-emerald-50/80">No new unlocks this time.</p>
+                <button class="btn-primary mt-2 w-full justify-center" type="button" @click="continueToNextMission">Continue</button>
+              </div>
+            </div>
             <p v-if="error" class="rounded-lg border border-red-500/60 bg-red-900/40 px-3 py-2 text-sm text-red-100">{{ error }}</p>
           </div>
-
-          <details class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
-            <summary class="cursor-pointer text-cyan-200">Watch briefing</summary>
-            <div class="mt-3 grid gap-3 md:grid-cols-2">
-              <div
-                v-for="video in mission.videos.filter((v) => !v.parent_only)"
-                :key="video.provider_id"
-                class="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-200"
-              >
-                <p class="font-semibold text-cyan-200">{{ video.title }}</p>
-                <p class="text-xs text-slate-400">Provider: {{ video.provider }} · {{ video.duration_seconds }}s</p>
-              </div>
-              <p v-if="!mission.videos.length" class="text-slate-500 text-sm">No videos for this mission.</p>
-            </div>
-          </details>
         </div>
+        <div v-else class="glow-card p-4 text-sm text-slate-300">Intel not loaded yet.</div>
       </section>
 
       <aside class="glow-card p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="font-display text-lg">Mission log</h3>
-          <NuxtLink to="/log" class="text-sm text-cyan-200 hover:text-cyan-100">Open log</NuxtLink>
+          <NuxtLink to="/log" class="text-xs text-cyan-200 hover:text-cyan-100">View log</NuxtLink>
         </div>
         <div class="space-y-2 text-sm">
           <div
@@ -296,10 +326,10 @@ const continueToNextMission = () => {
                 >
                   {{
                     progress.missionsStatus[m.id] === 'completed'
-                      ? 'Replay'
+                      ? 'Review'
                       : progress.missionsStatus[m.id] === 'active'
                         ? 'Continue'
-                        : 'Locked'
+                        : '🔒 Locked'
                   }}
                 </button>
               </div>
@@ -310,6 +340,34 @@ const continueToNextMission = () => {
           </div>
         </div>
       </aside>
+      </div>
+
+    <div
+      v-if="showVideoModal && briefingVideo"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur"
+      role="dialog"
+      aria-modal="true"
+      @click.self="showVideoModal = false"
+    >
+      <div class="w-full max-w-3xl space-y-4 rounded-2xl border border-cyan-400/40 bg-slate-900/90 p-4 shadow-2xl">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-cyan-200">Briefing playback</p>
+            <h3 class="font-display text-xl text-cyan-50">{{ briefingVideo.title }}</h3>
+          </div>
+          <button class="btn-secondary px-3 py-1 text-xs" type="button" @click="showVideoModal = false">Close</button>
+        </div>
+        <div class="aspect-video overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+          <iframe
+            class="h-full w-full"
+            :src="`https://www.youtube-nocookie.com/embed/${briefingVideo.provider_id}?rel=0&modestbranding=1`"
+            :title="briefingVideo.title"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          />
+        </div>
+      </div>
     </div>
 
     <div
