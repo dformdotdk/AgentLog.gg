@@ -67,19 +67,16 @@ class DatabaseSeeder extends Seeder
                 'topic_tags' => ['fractions'],
                 'assets' => ['base_asset_id' => 'asset_fractions_base'],
                 'content' => [
-                    'title' => 'Fractions Basics',
+                    'title' => 'Fraction Access Code',
                     'briefing' => [
-                        'Welcome, Agent. Your first drill begins now.',
-                        'The Academy gates open only to correct intel.',
-                        'Show that you can translate a fraction into code.',
+                        'Agent, the Academy gate is locked.',
+                        'To open it, translate words into fraction code.',
+                        'Your first access code is: ONE HALF.',
                     ],
-                    'objective' => 'Enter the correct fraction code to unlock Base Module 01.',
-                    'task' => [
-                        'prompt' => "Write 'one half' as a fraction.",
-                        'answer_format' => 'text',
-                    ],
-                    'hint' => 'A fraction looks like numerator/denominator. Half means 1 out of 2.',
-                    'success_copy' => 'Module unlocked. Base systems online.',
+                    'objective' => 'Enter the correct fraction code to unlock Module 01.',
+                    'task' => ['prompt' => 'Write “one half” as a fraction (example: 1/2).'],
+                    'hint' => 'Half means 1 out of 2 → 1/2.',
+                    'success_copy' => 'Gate opened. Module 01 online.',
                 ],
                 'validation' => ['type' => 'string_set', 'correct' => ['one half', '1/2']],
                 'videos' => [
@@ -158,6 +155,7 @@ class DatabaseSeeder extends Seeder
                 'is_boss' => $data['is_boss'],
                 'topic_tags' => $data['topic_tags'],
                 'assets' => $data['assets'],
+                'content' => $data['content'],
                 'validation' => $data['validation'],
             ]);
 
