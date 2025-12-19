@@ -255,7 +255,10 @@ const continueToNextMission = () => {
             <input v-model="answer" class="input-dark" :disabled="missionStatus === 'locked'" placeholder="Type your answer" />
             <div class="flex flex-wrap gap-3">
               <button class="btn-primary" :disabled="submitting || missionStatus === 'locked'" @click="submitAnswer">
-                <span v-if="submitting" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-cyan-200 border-t-transparent" />
+                <span
+                  v-if="submitting"
+                  class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-cyan-200 border-t-transparent"
+                ></span>
                 Submit
               </button>
               <button class="btn-secondary" type="button" @click="answer = ''">Clear</button>
@@ -339,7 +342,7 @@ const continueToNextMission = () => {
                     'bg-cyan-300': progress.missionsStatus[m.id] === 'active',
                     'bg-slate-600': !progress.missionsStatus[m.id] || progress.missionsStatus[m.id] === 'locked',
                   }"
-                />
+                ></span>
                 <button
                   class="btn-secondary text-xs px-2 py-1"
                   :disabled="progress.missionsStatus[m.id] === 'locked'"
